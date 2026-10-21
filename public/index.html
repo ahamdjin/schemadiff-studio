@@ -1,1 +1,92 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Review breaking OpenAPI contract changes with clear, exportable reports. Powered by oasdiff."><title>SchemaDiff Studio — Know what changed</title><link rel="stylesheet" href="/style.css"></head><body><div class="shell"><header><a class="brand" href="/">◇ <strong>SchemaDiff</strong> <span>Studio</span></a><div><span class="quiet">API contract review / v0.1</span><a href="https://github.com/ahamdjin/schemadiff-studio" target="_blank" rel="noopener noreferrer">Source ↗</a></div></header><main><div class="intro"><p class="eyebrow">OpenAPI comparison workbench</p><h1>Know what changed.<br><em>Know what breaks.</em></h1><p>From two API specifications to an actionable review. Inspect potentially breaking changes, read a full changelog, and export a Markdown report.</p></div><section class="workspace"><div class="workspace-title"><span>01 — Input contracts</span><button id="sample" type="button">Load example</button></div><div class="editors"><div><label for="base">BEFORE / BASELINE</label><textarea id="base" spellcheck="false" placeholder="Paste original OpenAPI JSON or YAML" aria-label="Original specification"></textarea></div><div><label for="revision">AFTER / REVISION</label><textarea id="revision" spellcheck="false" placeholder="Paste revised OpenAPI JSON or YAML" aria-label="Revised specification"></textarea></div></div><div class="workspace-actions"><small>Specs are sent to the configured server for processing. Do not paste credentials or sensitive contracts into untrusted instances.</small><button id="compare" class="primary" type="button">Analyze changes →</button></div></section><section class="report" aria-labelledby="report-heading"><div class="workspace-title"><span id="report-heading">02 — Change report</span><button id="download" disabled type="button">Export Markdown ↓</button></div><div id="status" class="status" role="status" aria-live="polite">Load an example or paste two OpenAPI definitions to begin.</div><div class="result-grid"><article><h2><span class="orange">●</span> Potentially breaking</h2><pre id="breaking">Nothing analyzed yet.</pre></article><article><h2><span class="green">●</span> Full changelog</h2><pre id="changelog">Nothing analyzed yet.</pre></article></div></section></main><footer><span>Open-source work by <a href="https://www.ahmadyar.co/" target="_blank" rel="noopener noreferrer">Ahmad Yar ↗</a></span><span>Analysis powered by <a href="https://github.com/oasdiff/oasdiff" target="_blank" rel="noopener noreferrer">oasdiff (Apache-2.0)</a></span></footer></div><script src="/app.js" defer></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a0d13">
+  <meta name="description" content="SchemaDiff Studio turns OpenAPI changes into an actionable release review: endpoint impact, breaking findings, release checklist, and shareable reports.">
+  <title>SchemaDiff Studio — API Release Review Workbench</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="SchemaDiff Studio home"><span class="brandmark">S<span class="branddot">.</span></span><span>SchemaDiff <small>STUDIO</small></span></a>
+    <nav class="navigation"><a href="#workspace">Workbench</a><a href="#features">Why this exists</a><a class="github" href="https://github.com/ahamdjin/schemadiff-studio" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="signal"></span> API CHANGE INTELLIGENCE / OPEN SOURCE</p>
+        <h1 id="hero-title">The diff is data.<br><em>The decision is yours.</em></h1>
+        <p class="lead">Move beyond raw OpenAPI diffs. See what changed at the endpoint level, inspect compatibility findings, and leave with a release-review checklist your team can actually use.</p>
+        <div class="hero-actions"><a href="#workspace" class="button button-primary">Start a review <span aria-hidden="true">↗</span></a><button id="hero-sample" class="button button-secondary" type="button">Explore sample review <span aria-hidden="true">→</span></button></div>
+        <p class="meta-line">No sign-up <span>·</span> OpenAPI 3.x / Swagger <span>·</span> Powered by oasdiff</p>
+      </div>
+      <aside class="hero-preview" aria-label="Workflow overview">
+        <p class="preview-caption">RELEASE REVIEW / 3 STEPS <span class="online">● ENGINE CONNECTED</span></p>
+        <div class="preview-step"><span class="step-number">01</span><div><strong>Compare contracts</strong><small>Paste or upload two specs</small></div><span class="step-icon">↗</span></div>
+        <div class="preview-step"><span class="step-number">02</span><div><strong>Understand impact</strong><small>Endpoints + oasdiff findings</small></div><span class="step-icon">↗</span></div>
+        <div class="preview-step"><span class="step-number">03</span><div><strong>Prepare release</strong><small>Review checklist + exports</small></div><span class="step-icon">✓</span></div>
+        <p class="preview-footer">For teams who ship APIs, not just specs.</p>
+      </aside>
+    </section>
+
+    <section class="workspace" id="workspace" aria-labelledby="workspace-title">
+      <div class="section-top"><div><p class="eyebrow">01 / WORKBENCH</p><h2 id="workspace-title">Compare API contracts</h2><p class="section-sub">Baseline → revision. Upload YAML/JSON or paste specs directly.</p></div><div class="toolbar"><button id="sample" type="button">Use example</button><button id="swap" type="button">⇄ Swap</button><button id="clear" type="button">Clear all</button></div></div>
+      <div class="editors">
+        <div class="editor">
+          <div class="editor-top"><label for="base"><span class="stage stage-before">A</span><strong>Baseline</strong><small>Current or older spec</small></label><label class="file-button" for="base-file">↑ Upload file</label><input class="visually-hidden" id="base-file" type="file" accept=".yaml,.yml,.json,application/json,text/yaml"></div>
+          <textarea id="base" spellcheck="false" placeholder='openapi: 3.0.3&#10;info:&#10;  title: Your API&#10;  version: 1.0.0&#10;paths: {}' aria-label="Baseline OpenAPI YAML or JSON"></textarea>
+          <div class="editor-bottom"><span>YAML / JSON</span><span id="base-size">0 characters</span></div>
+        </div>
+        <div class="editor">
+          <div class="editor-top"><label for="revision"><span class="stage stage-after">B</span><strong>Revision</strong><small>Proposed new spec</small></label><label class="file-button" for="revision-file">↑ Upload file</label><input class="visually-hidden" id="revision-file" type="file" accept=".yaml,.yml,.json,application/json,text/yaml"></div>
+          <textarea id="revision" spellcheck="false" placeholder='openapi: 3.0.3&#10;info:&#10;  title: Your API&#10;  version: 2.0.0&#10;paths: {}' aria-label="Revised OpenAPI YAML or JSON"></textarea>
+          <div class="editor-bottom"><span>YAML / JSON</span><span id="revision-size">0 characters</span></div>
+        </div>
+      </div>
+      <div class="runbar"><div class="security-note"><span aria-hidden="true">◎</span><p><strong>Privacy:</strong> Specs are transmitted to this instance's server to run oasdiff. We do not intentionally persist them. Avoid uploading secrets or confidential contracts to a public instance. External references are blocked.</p></div><button id="compare" type="button" class="button button-primary analyze">Analyze release impact <span aria-hidden="true">↗</span></button></div>
+      <div id="status" class="status" role="status" aria-live="polite">Ready. Paste two specs or load the guided example.</div>
+    </section>
+
+    <section id="results" class="results" hidden aria-labelledby="results-title">
+      <div class="section-top results-header"><div><p class="eyebrow">02 / ANALYSIS</p><h2 id="results-title">Your release review</h2><p id="version-label" class="section-sub"></p></div><div class="export-actions"><button id="export-json" type="button">Export JSON <span aria-hidden="true">↓</span></button><button id="export-md" class="export-primary" type="button">Export Markdown <span aria-hidden="true">↓</span></button></div></div>
+      <div id="decision" class="decision" role="note"><div><small>COMPATIBILITY SIGNAL</small><strong id="decision-title">Review pending</strong><p id="decision-description">Check the results below before shipping.</p></div><span id="decision-icon" aria-hidden="true">↗</span></div>
+      <div class="stats" aria-label="Endpoint summary">
+        <div class="stat"><span>ADDED ENDPOINTS</span><strong id="stat-added">0</strong><small>New operations</small></div>
+        <div class="stat"><span>REMOVED ENDPOINTS</span><strong id="stat-removed">0</strong><small>Missing in revision</small></div>
+        <div class="stat"><span>EDITED ENDPOINTS</span><strong id="stat-edited">0</strong><small>Definition changed</small></div>
+        <div class="stat important"><span>BREAKING FINDINGS</span><strong id="stat-breaking">—</strong><small>From oasdiff</small></div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Release analysis sections">
+        <button class="tab active" role="tab" type="button" aria-selected="true" aria-controls="pane-endpoints" id="tab-endpoints" data-tab="endpoints">Endpoint impact</button>
+        <button class="tab" role="tab" type="button" aria-selected="false" aria-controls="pane-findings" id="tab-findings" data-tab="findings">Compatibility findings <span class="tab-count" id="finding-count"></span></button>
+        <button class="tab" role="tab" type="button" aria-selected="false" aria-controls="pane-checklist" id="tab-checklist" data-tab="checklist">Release plan</button>
+        <button class="tab" role="tab" type="button" aria-selected="false" aria-controls="pane-reports" id="tab-reports" data-tab="reports">Raw reports</button>
+      </div>
+      <div class="panel" role="tabpanel" id="pane-endpoints" aria-labelledby="tab-endpoints">
+        <div class="panel-top"><div><h3>Operation inventory</h3><p>Structural changes matched by HTTP method and path. An edited definition isn't automatically breaking.</p></div><div class="filters"><label class="visually-hidden" for="endpoint-query">Search endpoints</label><input id="endpoint-query" type="search" placeholder="Search paths or methods…" autocomplete="off"><label class="visually-hidden" for="endpoint-status">Filter endpoint status</label><select id="endpoint-status"><option value="all">All operations</option><option value="removed">Removed</option><option value="edited">Edited</option><option value="added">Added</option><option value="unchanged">Unchanged</option></select></div></div>
+        <div id="endpoint-list" class="endpoint-list"></div><p id="endpoint-summary" class="list-footnote"></p>
+      </div>
+      <div class="panel" role="tabpanel" id="pane-findings" aria-labelledby="tab-findings" hidden>
+        <div class="panel-top"><div><h3>Compatibility findings</h3><p>Generated by the oasdiff change-classification engine. Validate against your clients and deployment.</p></div><div class="filters"><label class="visually-hidden" for="finding-query">Search findings</label><input id="finding-query" type="search" placeholder="Search rule or message…" autocomplete="off"><label class="visually-hidden" for="finding-level">Filter finding severity</label><select id="finding-level"><option value="all">All severities</option><option value="error">Error</option><option value="warning">Warning</option><option value="info">Info</option></select></div></div>
+        <p id="triage-progress" class="triage-progress" aria-live="polite">Review findings to record release decisions.</p><div id="finding-list" class="findings-list"></div><p id="finding-summary" class="list-footnote"></p>
+      </div>
+      <div class="panel" role="tabpanel" id="pane-checklist" aria-labelledby="tab-checklist" hidden>
+        <div class="panel-top"><div><h3>Release readiness checklist</h3><p>Suggested review steps, not an automated go/no-go decision. Mark items as your team verifies them.</p></div><span id="checklist-progress" class="progress-label">0 / 0 reviewed</span></div>
+        <div id="checklist-list" class="checklist"></div>
+        <div class="reminder"><strong>Remember</strong><p>A passing contract diff doesn't guarantee runtime compatibility. Check implementation behavior, generated clients, authorization, and traffic before rollout.</p></div>
+      </div>
+      <div class="panel" role="tabpanel" id="pane-reports" aria-labelledby="tab-reports" hidden>
+        <div class="panel-top"><div><h3>Original engine output</h3><p>Read the full report without our added summaries or classifications.</p></div><div class="filters"><label class="visually-hidden" for="report-type">Report to show</label><select id="report-type"><option value="breaking">Breaking-change report</option><option value="changelog">Full changelog</option></select></div></div>
+        <pre id="raw-output" class="raw-output">No report available.</pre>
+      </div>
+    </section>
+
+    <section class="details" id="features"><div class="details-title"><p class="eyebrow">BUILT FOR RELEASE REVIEWS</p><h2>Answers beyond “what changed?”</h2></div><div class="details-grid"><article><span>01 / Locate impact</span><h3>Know the surface area</h3><p>See added, removed, edited, and unchanged operations in one searchable inventory.</p></article><article><span>02 / Understand risk</span><h3>Grounded findings</h3><p>Use oasdiff's classifications for potential breaking changes. We don't substitute guesswork for its checks.</p></article><article><span>03 / Take action</span><h3>Leave with a plan</h3><p>Mark release review tasks and export a report you can attach to an issue or pull request.</p></article></div></section>
+  </main>
+  <footer class="footer"><div><strong>SchemaDiff Studio</strong><p>An independent open-source release-review workbench by <a href="https://www.ahmadyar.co/" target="_blank" rel="noopener noreferrer">Ahmad Yar</a>.</p></div><div><a href="https://github.com/oasdiff/oasdiff" target="_blank" rel="noopener noreferrer">Analysis: oasdiff (Apache-2.0) ↗</a><a href="https://github.com/ahamdjin/schemadiff-studio" target="_blank" rel="noopener noreferrer">Source code ↗</a></div></footer>
+</div>
+<script src="/app.js" defer></script>
+</body></html>

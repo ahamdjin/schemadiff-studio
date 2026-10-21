@@ -11,12 +11,12 @@ test('cloud interface produces both upstream reports from parsed OpenAPI objects
     calls++;
     assert.equal(a.openapi, '3.0.3');
     assert.ok(b.paths['/new']);
-    assert.equal(opts.format, 'markdown');
+    assert.ok(['markdown','json'].includes(opts.format));
     assert.equal(opts.allowExternalRefs, false);
     return {exitCode:0,stdout:'## changed'};
   };
   const result = await compareCloud({base,revision},{breaking:fake,changelog:fake});
-  assert.equal(calls,2);
+  assert.equal(calls,4);
   assert.equal(result.breaking,'## changed');
 });
 test('blocks any remote, absolute, or relative file references', async () => {
