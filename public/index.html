@@ -34,6 +34,17 @@
 
     <section class="workspace" id="workspace" aria-labelledby="workspace-title">
       <div class="section-top"><div><p class="eyebrow">01 / WORKBENCH</p><h2 id="workspace-title">Compare API contracts</h2><p class="section-sub">Baseline → revision. Upload YAML/JSON or paste specs directly.</p></div><div class="toolbar"><button id="sample" type="button">Use example</button><button id="swap" type="button">⇄ Swap</button><button id="clear" type="button">Clear all</button></div></div>
+      <div class="review-library-bar">
+        <div><strong>Continue a previous review</strong><p>Reopen a browser snapshot or import a teammate's review file. No accounts or server-side saved reviews.</p></div>
+        <div class="review-library-actions">
+          <button id="open-library" type="button" aria-expanded="false" aria-controls="saved-panel">Saved reviews <span id="saved-count"></span></button>
+          <label class="import-button" for="import-review">↑ Import review file</label><input class="visually-hidden" id="import-review" type="file" accept=".json,application/json">
+        </div>
+      </div>
+      <section id="saved-panel" class="saved-panel" hidden aria-label="Saved reviews on this browser">
+        <div class="saved-heading"><h3>Saved on this device</h3><p>Manual browser snapshots. Storage is device-specific; clear browser data to remove it.</p></div>
+        <div id="saved-list" class="saved-list"></div>
+      </section>
       <div class="editors">
         <div class="editor">
           <div class="editor-top"><label for="base"><span class="stage stage-before">A</span><strong>Baseline</strong><small>Current or older spec</small></label><label class="file-button" for="base-file">↑ Upload file</label><input class="visually-hidden" id="base-file" type="file" accept=".yaml,.yml,.json,application/json,text/yaml"></div>
@@ -52,6 +63,14 @@
 
     <section id="results" class="results" hidden aria-labelledby="results-title">
       <div class="section-top results-header"><div><p class="eyebrow">02 / ANALYSIS</p><h2 id="results-title">Your release review</h2><p id="version-label" class="section-sub"></p></div><div class="export-actions"><button id="export-json" type="button">Export JSON <span aria-hidden="true">↓</span></button><button id="export-md" class="export-primary" type="button">Export Markdown <span aria-hidden="true">↓</span></button></div></div>
+      <div class="snapshot-bar">
+        <div class="snapshot-fields">
+          <label for="review-title">Review name <input id="review-title" type="text" maxlength="120" placeholder="e.g. Payments API · October release"></label>
+          <label for="review-reviewer">Reviewer <input id="review-reviewer" type="text" maxlength="100" placeholder="Optional name or team"></label>
+        </div>
+        <div class="snapshot-actions"><button id="save-local" type="button">Save on this browser</button><span id="save-feedback" aria-live="polite" role="status">Not saved · Export a file to share or back up.</span></div>
+        <p class="snapshot-warning"><strong>Review-data notice:</strong> Browser saves and review files exclude your original API specifications, but include paths, change descriptions, and reviewer notes that may still be sensitive. Storage is not encrypted or synced between devices. Only save/share content you're allowed to disclose.</p>
+      </div>
       <div id="decision" class="decision" role="note"><div><small>COMPATIBILITY SIGNAL</small><strong id="decision-title">Review pending</strong><p id="decision-description">Check the results below before shipping.</p></div><span id="decision-icon" aria-hidden="true">↗</span></div>
       <div class="stats" aria-label="Endpoint summary">
         <div class="stat"><span>ADDED ENDPOINTS</span><strong id="stat-added">0</strong><small>New operations</small></div>
@@ -88,5 +107,5 @@
   </main>
   <footer class="footer"><div><strong>SchemaDiff Studio</strong><p>An independent open-source release-review workbench by <a href="https://www.ahmadyar.co/" target="_blank" rel="noopener noreferrer">Ahmad Yar</a>.</p></div><div><a href="https://github.com/oasdiff/oasdiff" target="_blank" rel="noopener noreferrer">Analysis: oasdiff (Apache-2.0) ↗</a><a href="https://github.com/ahamdjin/schemadiff-studio" target="_blank" rel="noopener noreferrer">Source code ↗</a></div></footer>
 </div>
-<script src="/app.js" defer></script>
+<script type="module" src="/app.js"></script>
 </body></html>
