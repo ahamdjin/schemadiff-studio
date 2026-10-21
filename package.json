@@ -4,6 +4,17 @@
   "private": true,
   "type": "module",
   "description": "Readable API contract change reports backed by oasdiff",
-  "scripts": {"start": "node server.js", "dev": "node --watch server.js", "test": "node --test"},
-  "engines": {"node": ">=20"}
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test",
+    "build": "npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@oasdiff-js/oasdiff-js": "1.0.0",
+    "yaml": "^2.8.1"
+  }
 }
