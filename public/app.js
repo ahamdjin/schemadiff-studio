@@ -19,6 +19,8 @@ function invalidate() {
   analysisId++;
   completed.clear();
   $('results').hidden = true;
+  $('compare').disabled = false;
+  $('compare').textContent = 'Analyze release impact ↗';
   updateLengths();
 }
 function setEditors(a,b) {
