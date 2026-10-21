@@ -1,3 +1,4 @@
+import {createPacket,parsePacket,savePacket,loadSaved,deleteSaved,listSaved} from './review-store.js';
 const $ = id => document.getElementById(id);
 const beforeEditor = $('base');
 const afterEditor = $('revision');
@@ -6,6 +7,8 @@ let lastReview = null;
 let completed = new Set();
 let triage = new Map();
 let analysisId = 0;
+let currentReviewId = null;
+let changedSinceSave = false;
 
 function setStatus(message, error = false) {
   status.textContent = message;
@@ -20,6 +23,9 @@ function invalidate() {
   analysisId++;
   completed.clear();
   triage.clear();
+  currentReviewId = null;
+  changedSinceSave = false;
+  $('save-feedback').textContent = 'Not saved · Export a file to share or back up.';
   $('results').hidden = true;
   $('compare').disabled = false;
   $('compare').textContent = 'Analyze release impact ↗';
@@ -172,6 +178,7 @@ function renderFindings() {
     function save() {
       triage.set(reviewKey,{ disposition: select.value, note: note.value.slice(0,600) });
       updateTriageProgress();
+      markReviewEdited();
     }
     select.addEventListener('change', save);
     note.addEventListener('input',save);
@@ -202,6 +209,7 @@ function renderChecklist() {
       if (cb.checked) completed.add(item.id);
       else completed.delete(item.id);
       updateChecklistProgress();
+      markReviewEdited();
     });
     label.append(cb,make('span','',item.label));
     target.append(label);
@@ -228,6 +236,10 @@ function showTab(name) {
 }
 function renderReview(data) {
   lastReview = data; completed = new Set(); triage = new Map();
+  currentReviewId = null; changedSinceSave = true;
+  $('review-title').value = (data.overview.base.title + ' · ' + data.overview.base.version + ' → ' + data.overview.revision.version).slice(0,120);
+  $('review-reviewer').value = '';
+  $('save-feedback').textContent = 'Not saved · Export a file to share or back up.';
   $('results').hidden=false;
   displayVersion(data.overview);
   displayDecision(data);
@@ -274,6 +286,8 @@ function markdownReport(data) {
     '**API:** '+o.base.title,
     '**Versions:** '+o.base.version+' → '+o.revision.version,
     '**Generated:** '+new Date().toISOString(),
+    '**Review:** '+$('review-title').value.trim(),
+    '**Reviewer:** '+($('review-reviewer').value.trim() || 'Not specified'),
     '',
     '## Review signal',
     f.breakingCount===null?'Structured breaking-change count unavailable; manually inspect the raw report.':f.breakingCount+' potential breaking findings reported by oasdiff.',
@@ -343,7 +357,117 @@ for(const tab of document.querySelectorAll('.tab'))tab.addEventListener('click',
 $('export-md').addEventListener('click',()=>{if(lastReview)downloadText(markdownReport(lastReview),'schemadiff-release-review.md','text/markdown;charset=utf-8');});
 $('export-json').addEventListener('click',()=>{if(lastReview){
   const {overview,findings,breaking,changelog,checklist}=lastReview;
-  const data={tool:'SchemaDiff Studio',generatedAt:new Date().toISOString(),overview,findings,breaking,changelog,triage:findings.findings.map(x=>({fingerprint:findingKey(x),...triage.get(findingKey(x))||{disposition:'open',note:''}})),checklist:checklist.map(x=>({...x,done:completed.has(x.id)}))};
-  downloadText(JSON.stringify(data,null,2),'schemadiff-release-review.json','application/json;charset=utf-8');
+  try {
+    const packet = exportPacket();
+    downloadText(JSON.stringify(packet,null,2),'schemadiff-release-review.json','application/json;charset=utf-8');
+    $('save-feedback').textContent = 'Review file downloaded. Original OpenAPI specs are not included.';
+  } catch(error) { $('save-feedback').textContent = error.message; }
 }});
 updateLengths();
+
+function markReviewEdited() {
+  if (!lastReview) return;
+  changedSinceSave = true;
+  $('save-feedback').textContent = 'Unsaved review changes · Save locally or export a file.';
+}
+
+function exportPacket() {
+  return createPacket({
+    report: lastReview, title: $('review-title').value.trim(),
+    reviewer: $('review-reviewer').value.trim(),
+    completed, triage, id: currentReviewId || undefined
+  });
+}
+function openPacket(packet,{fromLibrary=false}={}) {
+  // Importing a review never automatically saves or overwrites browser data.
+  analysisId++;
+  beforeEditor.value='';
+  afterEditor.value='';
+  updateLengths();
+  $('compare').disabled=false;
+  $('compare').textContent='Analyze release impact ↗';
+  const {triage:recorded,checklist, ...report}=packet;
+  renderReview({...report,checklist:checklist.map(({id,label})=>({id,label}))});
+  for(const item of checklist) if(item.done) completed.add(item.id);
+  for(const entry of recorded) triage.set(entry.fingerprint,{disposition:entry.disposition,note:entry.note});
+  $('review-title').value=packet.title;
+  $('review-reviewer').value=packet.reviewer;
+  currentReviewId=fromLibrary?packet.id:null;
+  changedSinceSave=!fromLibrary;
+  renderFindings();renderChecklist();
+  $('save-feedback').textContent=fromLibrary
+    ? 'Opened saved review · No original API specs are stored. You can update and save decisions.'
+    : 'Imported review · Unsaved locally. Save here or export an updated file.';
+  setStatus('Review opened. Original OpenAPI specs were not included; compare again by providing specs.');
+}
+function renderSavedReviews() {
+  const list=$('saved-list');
+  list.replaceChildren();
+  let saves=[];
+  try {saves=listSaved(window.localStorage);}catch { empty(list,'Browser storage is blocked. Import or export review JSON files instead.'); }
+  $('saved-count').textContent=saves.length?'('+saves.length+')':'';
+  if(!saves.length && !list.childElementCount) empty(list,'No saved reviews in this browser yet.');
+  for(const item of saves) {
+    const row=make('div','saved-row');
+    const copy=make('div','saved-description');
+    copy.append(make('strong','',item.title));
+    copy.append(make('small','',item.api+' · '+new Date(item.updatedAt).toLocaleString()+' · '+(item.breakingCount??'Unknown')+' potential breaking findings'));
+    const actions=make('div','saved-row-actions');
+    const open=make('button','','Open');
+    open.type='button';
+    open.addEventListener('click',()=>{
+      if(lastReview && changedSinceSave && !window.confirm('Discard unsaved review changes and open the saved review?')) return;
+      try{
+        const packet=loadSaved(window.localStorage,item.id);
+        openPacket(packet,{fromLibrary:true});
+        $('saved-panel').hidden=true;
+        $('open-library').setAttribute('aria-expanded','false');
+      }catch(e){setStatus(e.message,true);}
+    });
+    const remove=make('button','delete-review','Delete');
+    remove.type='button';
+    remove.setAttribute('aria-label','Delete saved review '+item.title);
+    remove.addEventListener('click',()=>{
+      if(!window.confirm('Permanently delete this browser snapshot? Export a file first if you need a backup.'))return;
+      try{
+        deleteSaved(window.localStorage,item.id);
+        if(currentReviewId===item.id){currentReviewId=null;markReviewEdited();}
+        renderSavedReviews();
+      }catch(e){setStatus(e.message,true);}
+    });
+    actions.append(open,remove); row.append(copy,actions);list.append(row);
+  }
+}
+$('review-title').addEventListener('input',markReviewEdited);
+$('review-reviewer').addEventListener('input',markReviewEdited);
+$('save-local').addEventListener('click',()=>{
+  try{
+    const packet=savePacket(window.localStorage,exportPacket());
+    currentReviewId=packet.id;
+    changedSinceSave=false;
+    $('save-feedback').textContent='Saved on this browser at '+new Date(packet.updatedAt).toLocaleTimeString()+'. Export a file to back up or share.';
+    renderSavedReviews();
+  }catch(e){$('save-feedback').textContent=e.message||'Could not save review.';}
+});
+$('open-library').addEventListener('click',()=>{
+  const show=$('saved-panel').hidden;
+  $('saved-panel').hidden=!show;
+  $('open-library').setAttribute('aria-expanded',String(show));
+  if(show)renderSavedReviews();
+});
+$('import-review').addEventListener('change',async event=>{
+  const input=event.target;
+  const file=input.files?.[0];
+  if(!file)return;
+  try{
+    if(file.size>1_400_000)throw new Error('Review file is too large (maximum 1.4 MB).');
+    const packet=parsePacket(await file.text());
+    if(lastReview && changedSinceSave && !window.confirm('Discard unsaved review changes and import this file?'))return;
+    openPacket(packet);
+    $('saved-panel').hidden=true;
+    $('open-library').setAttribute('aria-expanded','false');
+  } catch(error) {
+    setStatus(error.message||'Could not open this review file.',true);
+  } finally {input.value='';}
+});
+renderSavedReviews();
