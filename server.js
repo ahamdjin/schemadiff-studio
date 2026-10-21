@@ -2,7 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
-import { compareSpecs } from './lib/compare.js';
+import { compareCloud } from './lib/compare-cloud.js';
 
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), 'public');
 const assets = new Map([['/', ['index.html', 'text/html; charset=utf-8']], ['/app.js', ['app.js', 'application/javascript; charset=utf-8']], ['/style.css', ['style.css', 'text/css; charset=utf-8']]]);
@@ -25,7 +25,7 @@ const server = http.createServer(async (req, res) => {
       chunks.push(chunk);
     }
     const data = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-    const report = await compareSpecs(data);
+    const report = await compareCloud(data);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(report));
   } catch (error) {
