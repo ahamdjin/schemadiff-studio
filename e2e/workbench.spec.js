@@ -37,7 +37,7 @@ test('operations can be searched and the input order swapped', async ({ page }) 
   await expect(page.locator('.endpoint-row')).toHaveCount(1);
   await expect(page.locator('.endpoint-row').first()).toContainText('/legacy-report');
   await page.locator('#endpoint-query').fill('not-on-any-route');
-  await expect(page.locator('.empty')).toBeVisible();
+  await expect(page.locator('#endpoint-list .empty')).toBeVisible();
   await page.getByRole('button',{name:/Swap/}).click();
   await expect(page.locator('#results')).toBeHidden();
   await page.getByRole('button',{name:/Analyze release impact/}).click();
