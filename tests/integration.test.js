@@ -26,6 +26,7 @@ test('real engine gives structured findings and a release checklist', {timeout: 
   assert.equal(report.overview.revision.operations,0);
   assert.ok(Array.isArray(report.checklist));
   assert.ok(report.checklist.some(task=>task.id==='removed'));
+  console.log('INTEGRATION_DIAGNOSTIC',JSON.stringify({finding:report.findings,breaking:report.breaking,changelog:report.changelog}).slice(0,3500));
   assert.ok(report.findings.available,'The oasdiff wrapper should expose structured changes');
   assert.ok(report.findings.breakingCount>=1,'Removing GET /items should be reported as breaking');
   assert.ok(report.findings.findings.some(item=>item.path.includes('items') || item.message.includes('items')));
