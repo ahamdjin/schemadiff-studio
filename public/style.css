@@ -2,3 +2,13 @@
 @media(max-width:1080px){.hero{grid-template-columns:1fr;gap:30px;padding:62px 0 64px}.hero-preview{max-width:650px}.lead{max-width:650px}.section-top,.panel-top{align-items:flex-start}.section-top{flex-wrap:wrap}.panel-top{flex-direction:column}.stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:720px){.topbar{height:67px}.brand{font-size:16px}.brandmark{width:34px;height:34px}.navigation{gap:15px}.navigation a:not(.github){display:none}.hero{padding:51px 0 56px}.hero h1{font-size:clamp(40px,9vw,61px)}.hero-preview{padding:19px}.lead{font-size:13px}.workspace{padding:16px}.editors{grid-template-columns:1fr}.editor textarea{height:225px}.runbar{flex-direction:column;align-items:stretch}.analyze{justify-content:center}.results{padding-top:58px}.results-header{display:flex;align-items:stretch;flex-direction:column}.export-actions{justify-content:stretch}.export-actions button{flex:1}.stats{gap:8px}.stat{padding:16px}.stat strong{font-size:30px}.stat>span{font-size:9px}.tabs{gap:4px}.tab{padding:14px 11px;font-size:11px}.panel{padding:16px}.panel-top{align-items:stretch}.filters{display:grid;grid-template-columns:minmax(0,1fr) auto}.filters input{min-width:0;width:100%}.endpoint-row{gap:9px;padding:12px}.endpoint-row .method{width:47px;flex-basis:47px}.endpoint-row .tag{display:none}.endpoint-main code{font-size:11px}.finding-row{flex-direction:column}.details{padding:75px 0}.details-grid{grid-template-columns:1fr}.details-grid article{padding:21px}.footer{flex-direction:column}.footer>div:last-child{flex-wrap:wrap}.meta-line{line-height:1.9}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+/* Per-finding review decisions: local page state only, exported on request. */
+.triage-progress{border:1px solid #3a4a46;background:#172621;color:#b8e5cc;border-radius:9px;font-size:11px;line-height:1.7;padding:13px 16px;margin:0 0 16px}
+.triage-details{margin-top:14px;background:#141f28;border:1px solid #2e4350;border-radius:9px;padding:10px 13px}
+.triage-details summary{font-size:11px;font-weight:650;color:#c3d6dd;cursor:pointer}
+.triage-details[open] summary{margin-bottom:14px}
+.triage-controls{display:grid;grid-template-columns:minmax(180px,.65fr) minmax(0,1.35fr);gap:12px}
+.triage-controls label{display:flex;flex-direction:column;gap:7px;font-size:11px;color:#a5b6c3}
+.triage-controls select,.triage-controls textarea{width:100%;padding:11px;background:#0b131b;color:#dfedea;border-radius:7px;border:1px solid #344954;font-size:12px}
+.triage-controls textarea{resize:vertical;min-height:55px;max-height:190px;line-height:1.6}
+@media(max-width:720px){.triage-controls{grid-template-columns:1fr}}
