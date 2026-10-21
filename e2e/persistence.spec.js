@@ -1,0 +1,93 @@
+import {test,expect} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
+
+test('explicit save, reload, reopen, edit, and resave keeps review decisions',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('button',{name:'Use example'}).click();
+  await expect(page.locator('#results')).toBeVisible({timeout:20000});
+  await page.getByRole('tab',{name:/Compatibility findings/}).click();
+  await page.locator('.finding-row details summary').first().click();
+  await page.locator('.finding-row select').first().selectOption('fix');
+  await page.locator('.finding-row textarea').first().fill('API-101: notify partner teams');
+  await page.getByRole('tab',{name:'Release plan'}).click();
+  await page.locator('.checklist-row input').first().check();
+  await page.locator('#review-title').fill('Commerce API · launch review');
+  await page.locator('#review-reviewer').fill('Release engineering');
+  await page.locator('#save-local').click();
+  await expect(page.locator('#save-feedback')).toContainText('Saved on this browser');
+  await page.reload();
+  await page.locator('#open-library').click();
+  await expect(page.locator('.saved-row')).toHaveCount(1);
+  await expect(page.locator('.saved-row')).toContainText('Commerce API · launch review');
+  await page.locator('.saved-row button').first().click();
+  await expect(page.locator('#results')).toBeVisible();
+  await expect(page.locator('#review-title')).toHaveValue('Commerce API · launch review');
+  await expect(page.locator('#review-reviewer')).toHaveValue('Release engineering');
+  await expect(page.locator('#base')).toBeEmpty();
+  await expect(page.locator('#revision')).toBeEmpty();
+  await page.getByRole('tab',{name:/Compatibility findings/}).click();
+  await expect(page.locator('.finding-row select').first()).toHaveValue('fix');
+  await expect(page.locator('.finding-row textarea').first()).toHaveValue('API-101: notify partner teams');
+  await page.getByRole('tab',{name:'Release plan'}).click();
+  await expect(page.locator('.checklist-row input').first()).toBeChecked();
+  await page.getByRole('tab',{name:/Compatibility findings/}).click();
+  await page.locator('.finding-row textarea').first().fill('API-102: updated migration plan');
+  await page.locator('#save-local').click();
+  await page.reload();
+  await page.locator('#open-library').click();
+  await expect(page.locator('.saved-row')).toHaveCount(1);
+  await page.locator('.saved-row button').first().click();
+  await page.getByRole('tab',{name:/Compatibility findings/}).click();
+  await expect(page.locator('.finding-row textarea').first()).toHaveValue('API-102: updated migration plan');
+});
+
+test('portable JSON export can be imported on fresh page with decisions and checklist',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('button',{name:'Use example'}).click();
+  await expect(page.locator('#results')).toBeVisible({timeout:20000});
+  await page.locator('#review-title').fill('Portable review');
+  await page.getByRole('tab',{name:/Compatibility findings/}).click();
+  await page.locator('.finding-row details summary').first().click();
+  await page.locator('.finding-row select').first().selectOption('accepted');
+  await page.locator('.finding-row textarea').first().fill('Documented compatibility exception');
+  await page.getByRole('tab',{name:'Release plan'}).click();
+  await page.locator('.checklist-row input').first().check();
+  const downloading=page.waitForEvent('download');
+  await page.locator('#export-json').click();
+  const download=await downloading;
+  const data=JSON.parse(await readFile(await download.path(),'utf8'));
+  expect(data.kind).toBe('schemadiff.release-review');
+  expect(data.schemaVersion).toBe(1);
+  expect(JSON.stringify(data)).not.toContain('"openapi":');
+  await page.reload();
+  await page.locator('#import-review').setInputFiles({name:'review.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});
+  await expect(page.locator('#results')).toBeVisible();
+  await expect(page.locator('#review-title')).toHaveValue('Portable review');
+  await page.getByRole('tab',{name:/Compatibility findings/}).click();
+  await expect(page.locator('.finding-row select').first()).toHaveValue('accepted');
+  await expect(page.locator('.finding-row textarea').first()).toHaveValue('Documented compatibility exception');
+  await page.getByRole('tab',{name:'Release plan'}).click();
+  await expect(page.locator('.checklist-row input').first()).toBeChecked();
+  await page.locator('#save-local').click();
+  await expect(page.locator('#save-feedback')).toContainText('Saved on this browser');
+});
+
+test('invalid imported review is rejected without creating a saved snapshot',async({page})=>{
+  await page.goto('/');
+  await page.locator('#import-review').setInputFiles({name:'fake.json',mimeType:'application/json',buffer:Buffer.from('{"kind":"unexpected","schemaVersion":1}')});
+  await expect(page.locator('#status')).toContainText('Unsupported review file');
+  await page.locator('#open-library').click();
+  await expect(page.locator('.saved-row')).toHaveCount(0);
+});
+
+test('saved reviews controls remain in mobile viewport',async({page})=>{
+  await page.setViewportSize({width:375,height:812});
+  await page.goto('/');
+  await page.getByRole('button',{name:'Use example'}).click();
+  await expect(page.locator('#results')).toBeVisible({timeout:20000});
+  await page.locator('#save-local').click();
+  await page.locator('#open-library').click();
+  await expect(page.locator('.saved-row')).toBeVisible();
+  const size=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:window.innerWidth}));
+  expect(size.scroll).toBeLessThanOrEqual(size.width+1);
+});
