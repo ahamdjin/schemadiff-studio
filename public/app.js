@@ -4,6 +4,7 @@ const afterEditor = $('revision');
 const status = $('status');
 let lastReview = null;
 let completed = new Set();
+let triage = new Map();
 let analysisId = 0;
 
 function setStatus(message, error = false) {
@@ -18,6 +19,7 @@ function invalidate() {
   lastReview = null;
   analysisId++;
   completed.clear();
+  triage.clear();
   $('results').hidden = true;
   $('compare').disabled = false;
   $('compare').textContent = 'Analyze release impact ↗';
@@ -115,6 +117,20 @@ function renderEndpoints() {
   $('endpoint-summary').textContent = 'Showing ' + Math.min(filtered.length,max) + ' of ' + filtered.length +
     ' matched operations · Exact method/path comparison. Path renames appear as removed + added; the classification does not prove a breaking change.';
 }
+function findingKey(item) {
+  return item.fingerprint || [item.id,item.method,item.path,item.message].join('|');
+}
+function updateTriageProgress() {
+  if (!lastReview) return;
+  const breakingItems = lastReview.findings.findings.filter(item => item.breaking);
+  const handled = breakingItems.filter(item => {
+    const disposition = triage.get(findingKey(item))?.disposition;
+    return disposition && disposition !== 'open';
+  }).length;
+  $('triage-progress').textContent = breakingItems.length
+    ? handled + ' / ' + breakingItems.length + ' breaking findings have a review decision. Add rationale for accepted exceptions.'
+    : 'No structured breaking findings to triage. Review the raw engine report and release checklist.';
+}
 function renderFindings() {
   const target = $('finding-list');
   target.replaceChildren();
@@ -134,11 +150,42 @@ function renderFindings() {
     if (item.method || item.path) body.append(make('small','',[item.method,item.path].filter(Boolean).join(' ')));
     row.append(make('span','status-pill ' + item.severity,item.severity));
     row.append(body);
+    const reviewKey = findingKey(item);
+    const saved = triage.get(reviewKey) || { disposition: 'open', note: '' };
+    const detail = make('details', 'triage-details');
+    if (saved.disposition !== 'open' || saved.note) detail.open = true;
+    detail.append(make('summary', '', 'Review decision & rationale'));
+    const controls = make('div', 'triage-controls');
+    const decision = make('label', '', 'Decision');
+    const select = document.createElement('select');
+    select.setAttribute('aria-label', 'Decision for ' + item.id);
+    for (const [value, label] of [['open','Needs review'],['fix','Fix planned'],['accepted','Accepted with rationale'],['false-positive','Not applicable / false positive']]) {
+      const option = document.createElement('option'); option.value = value; option.textContent = label;
+      select.append(option);
+    }
+    select.value = saved.disposition;
+    const noteLabel = make('label', '', 'Reviewer note');
+    const note = document.createElement('textarea');
+    note.rows = 2; note.maxLength = 600;
+    note.placeholder = 'Evidence, ticket, owner, or why this is accepted…';
+    note.value = saved.note;
+    function save() {
+      triage.set(reviewKey,{ disposition: select.value, note: note.value.slice(0,600) });
+      updateTriageProgress();
+    }
+    select.addEventListener('change', save);
+    note.addEventListener('input',save);
+    decision.append(select);
+    noteLabel.append(note);
+    controls.append(decision,noteLabel);
+    detail.append(controls);
+    body.append(detail);
     target.append(row);
   }
   if (!filtered.length) {
     empty(target,findings.available ? 'No findings match this filter.' : 'Structured findings unavailable. See the raw oasdiff reports for a full review.');
   }
+  updateTriageProgress();
   $('finding-summary').textContent = findings.available
     ? ('Showing ' + Math.min(filtered.length,250) + ' of ' + filtered.length + ' matching findings · Counts are from the oasdiff changelog and breaking analyses.')
     : 'The engine reports are available but structured findings were not returned. Do not interpret the empty list as a clean release.';
@@ -180,7 +227,7 @@ function showTab(name) {
   }
 }
 function renderReview(data) {
-  lastReview = data; completed = new Set();
+  lastReview = data; completed = new Set(); triage = new Map();
   $('results').hidden=false;
   displayVersion(data.overview);
   displayDecision(data);
@@ -239,6 +286,12 @@ function markdownReport(data) {
     '',
     ...o.endpoints.filter(x=>x.status!=='unchanged').map(x=>'- **'+x.status.toUpperCase()+'** '+x.method+' '+x.path),
     '',
+    '## Finding triage decisions',
+    ...f.findings.filter(item=>item.breaking).map(item=>{
+      const decision=triage.get(findingKey(item)) || {disposition:'open',note:''};
+      return '- **'+decision.disposition.toUpperCase()+'** '+item.id+' '+item.method+' '+item.path + (decision.note?' — '+decision.note:'');
+    }),
+    '',
     '## Release checklist',
     ...data.checklist.map(item=>'- ['+(completed.has(item.id)?'x':' ')+'] '+item.label),
     '',
@@ -290,7 +343,7 @@ for(const tab of document.querySelectorAll('.tab'))tab.addEventListener('click',
 $('export-md').addEventListener('click',()=>{if(lastReview)downloadText(markdownReport(lastReview),'schemadiff-release-review.md','text/markdown;charset=utf-8');});
 $('export-json').addEventListener('click',()=>{if(lastReview){
   const {overview,findings,breaking,changelog,checklist}=lastReview;
-  const data={tool:'SchemaDiff Studio',generatedAt:new Date().toISOString(),overview,findings,breaking,changelog,checklist:checklist.map(x=>({...x,done:completed.has(x.id)}))};
+  const data={tool:'SchemaDiff Studio',generatedAt:new Date().toISOString(),overview,findings,breaking,changelog,triage:findings.findings.map(x=>({fingerprint:findingKey(x),...triage.get(findingKey(x))||{disposition:'open',note:''}})),checklist:checklist.map(x=>({...x,done:completed.has(x.id)}))};
   downloadText(JSON.stringify(data,null,2),'schemadiff-release-review.json','application/json;charset=utf-8');
 }});
 updateLengths();
